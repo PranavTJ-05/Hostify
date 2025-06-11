@@ -6,7 +6,7 @@ const mimetypes = require('mimetypes'); // Assuming you have a package that prov
 
 
 const s3Client = new S3Client({
-    region: '',
+    region: 'ap-south-1', // Change to your desired region
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -34,18 +34,23 @@ async function init(){
         const distFolderPath = path.join(__dirname, 'output', 'dist');
         const distFolderContents = fs.readdirSync(distFolderPath,{recursive: true, withFileTypes: true});
 
-        for(const item of distFolderContents) {
+        for(const file of distFolderContents) {
+            const item = path.join(distFolderPath, file.name);
             if (fs.lstatSync(path.join(distFolderPath, item.name)).isDirectory()) continue;
             
+            console.log("uploading",item)
             const command = new PutObjectCommand({
-                Bucket: '',
+                Bucket: 'hostify-bucket ',  //This is my actual aws public bucket
                 Key: `__output/${PROJECT_ID}/${item}`,
                 Body: fs.createReadStream(item),
                 ContentType: mimetypes.lookup()
             });
             // You may want to send the command using s3Client.send(command) here
             await s3Client.send(command);
+            console.log("uploaded",item)
         }
         console.log("All files uploaded successfully");
     });  //Capturing the exit code of the child process
 }
+
+init()
